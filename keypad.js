@@ -11,7 +11,7 @@ const establishPeerConnection = (peer, meID, params) => {
     const [font, alphabet, peerID] = parseParams(params);
     const connectionPayload = {
         'message': 'Hello! Connection made.',
-        'keyboardClientID': meID,
+        'keypadClientID': meID,
         'experimentServerID': peerID,
         'timeSent': Date.now(),
         'elapsedStartToSend': Date.now() - startTime
@@ -27,7 +27,7 @@ const establishPeerConnection = (peer, meID, params) => {
     const handleOpen = (id) => {
         conn.send(JSON.stringify(connectionPayload));
         // Set up keypad for use
-        populateKeyboard(alphabet=alphabet, font=font);
+        populateKeypad(alphabet=alphabet, font=font);
         // Just a personal check of our understanding
         if (id == peerID) {
             console.log('Good job, your understanding of experimentClient peer ID is correct!', id, peerID);
@@ -46,7 +46,7 @@ const establishPeerConnection = (peer, meID, params) => {
             console.log('Error in parsing data received! Must set "alphabet" and "font" properties');
         } else {
             // Stay on the same page, change keys (url params now out-of-sync)
-            // populateKeyboard(data.alphabet, data.font);
+            // populateKeypad(data.alphabet, data.font);
 
             // Redirect to the correct page
             conn.close();
@@ -111,17 +111,17 @@ const responseButtonHandler = (button) => {
     // Send response message to experimentClient
     const message = {
         'message': 'Keypress',
-        'keyboardClientID': meID,
+        'keypadClientID': meID,
         'experimentClientID': peerID,
         'response': button.id,
         'timeSent': Date.now(),
         'elapsedStartToSend': Date.now() - startTime};
     conn.send(JSON.stringify(message));
 
-    // Update keyboard after a period of visible non-responsivity (ie ITI)
+    // Update keypad after a period of visible non-responsivity (ie ITI)
     visualFeedbackThenReset(alphabet, font);
 };
-const populateKeyboard = (alphabet, font) => {
+const populateKeypad = (alphabet, font) => {
     // Set-up an instruction/welcome message for the user
     const header = document.getElementById('remote-header');
     header.innerText = 'Please respond by pressing a key.';
