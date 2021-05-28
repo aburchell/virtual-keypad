@@ -14,7 +14,10 @@ app.use('/static', express.static(path.join(__dirname, '/public')));
 // Middleware to check we have all the params we need
 const checkParams = (req, res, next) => {
   let noID = !req.query.hasOwnProperty('peerID');
-  if (noID) { console.log('No peerID given.'); } // TODO Breaking! Serve error
+  if (noID) { 
+    console.log('No peerID given.');  // TODO Breaking! Serve error
+    req.query.peerID = uuidv4(); // TEMPorary and only usable to test keypadClient
+  }
 
   // TODO check that all characters can be input as query params
   const noAlphabet = !req.query.hasOwnProperty('alphabet');
