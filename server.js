@@ -9,7 +9,11 @@ var server = "http://localhost:3000";
 // Don't actually know if this should be set to true or false.
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 app.use('/static', express.static(path.join(__dirname, '/public')));
+app.use('/peer', express.static(path.join(__dirname, '/node_modules/peerjs/dist')));
+app.use('/uuid', express.static(path.join(__dirname, '/node_modules/uuid/dist')));
+
 
 // Middleware to check we have all the params we need
 const checkParams = (req, res, next) => {

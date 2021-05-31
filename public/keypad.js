@@ -1,3 +1,5 @@
+let startTime;
+
 // -- Parameters --
 const parseParams = (params) => {
     const font = params.get('font');
@@ -9,6 +11,8 @@ const parseParams = (params) => {
 // -- Connection --
 const establishPeerConnection = (peer, meID, params) => {
     const [font, alphabet, peerID] = parseParams(params);
+    startTime = Date.now();
+    peer.on('error', handlePeerError);
     const connectionPayload = {
         'message': 'Hello! Connection made.',
         'keypadClientID': meID,
@@ -134,7 +138,7 @@ const populateKeypad = (alphabet, font) => {
     // Create new buttons
     alphabet.forEach((symbol) => createButton(symbol, alphabet, font));
 };
-const createButton = (symbol) = {
+const createButton = (symbol) => {
     // Create a response button for this symbol
     let button = document.createElement('a');
     button.id = symbol;
@@ -162,4 +166,3 @@ const createButton = (symbol) = {
 const handlePeerError = (err) => {
     console.log('Uh oh! Error with peer: ', err);
 };
-peer.on('error', handlePeerError);
