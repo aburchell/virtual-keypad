@@ -7,7 +7,7 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+	<script src="/static/lib/peerjs.min.js"></script>
         <script src="https://unpkg.com/uuid@latest/dist/umd/uuidv4.min.js"></script>
         <style type="text/css" media="screen">
          body {
@@ -38,17 +38,15 @@
 
     </body>
     <script type="text/javascript">
-        // import { v4 as uuidv4 } from 'uuid';
-        // import Peer from 'peerjs';
      let experimentClientID, peer, conn;
-     peer = new Peer();
+     const communications = {};
+
      // TODO clean this whole file up.
-     // TODO restructure project, ie use public folder and /static pathing
      function generatePeerConnection() {
-         console.log("Generating ID");
          experimentClientID = uuidv4();
-         console.log("Generated the ID: ", experimentClientID);
-         document.getElementById("idReadout").setInnerText = experimentClientID;
+         peer = new Peer(experimentClientID);
+
+         document.getElementById("idReadout").innerText = experimentClientID;
          const alphabet = 'abcedfghijk';
          const font = 'Sloan';
          const params = {'alphabet': alphabet, 'font': font, 'peerID': experimentClientID};
@@ -58,10 +56,45 @@
          let uri = 'https://testtestgus.xyz/init?' + queryString;
          console.log(uri);
          document.getElementById("simulatedExpScreen").src = uri;
+	 peer.on('connection', onConnection);
+	     };
      };
      document.getElementById("newPeer").addEventListener("click", generatePeerConnection);
 
-     peer.on
+ const onConnection = (conn) => {
+     const onConnData = (data) => {
+	     if (experimentClientID in communications) {
+		communications[experimentClientID].push(...data.response);
+
+		     } else {
+			communications[experimentClientID] = [data.response];
+			updateDataDisplay(communications);
+			
+		     }
+	     };
+	     const onConnOpen = () => {
+		conn.on('data')
+	     };
+	     conn.on('open', onConnOpen);
+
+	const updateDataDisplay = (comms) => {
+		display = document.getElementById('dataDisplay');
+		let id, idLI, idData, idHeader, datum, datumReadout;
+		for (id in comms) {
+		  idLI = document.createElement('li');
+		  idHeader = document.createElement('h2');
+		  idHeader.innerText = id;
+		  idData = document.createElement('ul')
+		  idLI.appendChild(idHeader);
+		  idLI.appendChild(idData);
+		  display.appendChild(idLI);
+		    for (datum in comms[id]) {
+			datumReadout = document.createElement('li');
+			datumReadout.innerText = datum;
+			idData.appendChild(datumReadout);
+		    }
+		}
+	};
     </script>
 
 </html>

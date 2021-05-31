@@ -1,4 +1,4 @@
-let startTime;
+let startTime, conn;
 
 // -- Parameters --
 const parseParams = (params) => {
@@ -10,6 +10,7 @@ const parseParams = (params) => {
 
 // -- Connection --
 const establishPeerConnection = (peer, meID, params) => {
+    console.log('DEBUG In establishPeerConnection()');
     const [font, alphabet, peerID] = parseParams(params);
     startTime = Date.now();
     peer.on('error', handlePeerError);
@@ -25,7 +26,7 @@ const establishPeerConnection = (peer, meID, params) => {
                             serialization: 'json'}
 
     // Connection with the experiment client
-    let conn = peer.connect(peerID, connectOptions);
+    conn = peer.connect(peerID, connectOptions);
 
     // Connection ready to use
     const handleOpen = (id) => {

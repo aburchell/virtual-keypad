@@ -11,9 +11,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use('/static', express.static(path.join(__dirname, '/public')));
-app.use('/peer', express.static(path.join(__dirname, '/node_modules/peerjs/dist')));
-app.use('/uuid', express.static(path.join(__dirname, '/node_modules/uuid/dist')));
-
+// To fix a problem with peerjs.min.js source map, following Satyamkumarai:
+// from: https://github.com/peers/peerjs/issues/695
+app.use('/peerjs', express.static(path.join(__dirname, '/node_modules', '/peerjs', '/dist')));
 
 // Middleware to check we have all the params we need
 const checkParams = (req, res, next) => {
@@ -39,15 +39,20 @@ const checkParams = (req, res, next) => {
   next();
 };
 
+// Create a mock experimentClient. For testing purposes only.
+app.get('/expClient', checkParams, function (req, res) {
+  res.sendFile(path.join(__dirname, 'public/', 'experimentClient.html'));
+});
+
 // Create a screen with a QR Code to for the user to scan.
 app.get('/init', checkParams, function (req, res) {
-  res.sendFile(path.join(__dirname, 'qr.html'));
+  res.sendFile(path.join(__dirname, 'public/', 'qr.html'));
 });
 
 // Link to the actual keypad
 // ie this is where the user will be sent (from the QR code) on their phone
 app.get('/keypad', checkParams, function (req, res) {
-  res.sendFile(path.join(__dirname, 'keypad.html'));
+  res.sendFile(path.join(__dirname, 'public/', 'keypad.html'));
 });
 
 app.use(function (err, req, res, next) {
