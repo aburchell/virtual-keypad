@@ -10,7 +10,6 @@ const parseParams = (params) => {
 
 // -- Connection --
 const establishPeerConnection = (peer, meID, params) => {
-    console.log('DEBUG In establishPeerConnection()');
     const [font, alphabet, peerID] = parseParams(params);
     startTime = Date.now();
     peer.on('error', handlePeerError);
@@ -25,8 +24,10 @@ const establishPeerConnection = (peer, meID, params) => {
                             metadata: connectionPayload,
                             serialization: 'json'}
 
+    console.log('DEBUG about to connect to peer');
     // Connection with the experiment client
     conn = peer.connect(peerID, connectOptions);
+    console.log('DEBUG just connected to peer with: ', conn);
 
     // Connection ready to use
     const handleOpen = (id) => {
