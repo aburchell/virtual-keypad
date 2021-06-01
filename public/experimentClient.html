@@ -68,6 +68,7 @@
     const onConnection = (conn) => {
 	console.log('DEBUG in onConnection, with conn: ', conn);
         const onConnData = (data) => {
+            console.log('DEBUG in onConnData')
             if (experimentClientID in communications) {
                 communications[experimentClientID].push(...data.response);
             } else {
