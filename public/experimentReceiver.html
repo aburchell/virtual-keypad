@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width">
+        <title>Temporary, pseudo-experiment</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- <link rel="stylesheet" href="style.css"> -->
+        <style type="text/css" media="screen">
+            body {
+                overflow: hidden;
+            }
+
+            #dataDisplay {
+                overflow: scroll;
+                max-height: 600px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div>
+        <iframe id="simulatedExpScreen" 
+            title="ExperimentClient" 
+            width="600" height="400"></iframe>
+            <div id="idReadout" style="display:inline;">
+            <div id="status"></div>
+        </div>
+        <h3>Received data:</h3>
+        <ul id="dataDisplay"></ul>
+
+        <script src="/static/lib/peerjs.min.js"></script>
+        <script src="https://unpkg.com/uuid@latest/dist/umd/uuidv4.min.js"></script>
+        <script type="text/javascript">
+            (function () {
+
+                var lastPeerId = null;
+                var peer = null; // Own peer object
+                var peerId = null;
+                var conn = null;
+                var alphabet = null;
+                var font = null;
+                var communications = [];
+                var recvId = document.getElementById("idReadout");
+                var status = document.getElementById("status");
+                var sendMessageBox = document.getElementById("sendMessageBox");
+                var sendButton = document.getElementById("sendButton");
+                var clearMsgsButton = document.getElementById("clearMsgsButton");
+
+                /**
+                 * Create the Peer object for our end of the connection.
+                 *
+                 * Sets up callbacks that handle any events related to our
+                 * peer object.
+                 */
+                 function initialize() {
+                    // Create own peer object with connection to shared PeerJS server
+                    peer = new Peer(null, {
+                        debug: 2
+                    });
+
+                    peer.on('open', function (id) {
+                        // Workaround for peer.reconnect deleting previous id
+                        if (peer.id === null) {
+                            console.log('Received null id from peer open');
+                            peer.id = lastPeerId;
+                        } else {
+                            lastPeerId = peer.id;
+                        }
+
+                        console.log('ID: ' + peer.id);
+                        recvId.innerHTML = "ID: " + peer.id;
+                        status.innerHTML = "Awaiting connection...";
+
+                        document.getElementById("idReadout").innerText = peer.id;
+                        alphabet = 'abcedfghij';
+                        font = 'Sloan';
+                        const params = { 'alphabet': alphabet, 
+                                        'font': font, 
+                                        'peerID': peer.id };
+                        let queryString = Object.keys(params)
+                            .map(key => key + '=' + params[key])
+                            .join('&');
+                        let uri = 'https://testtestgus.xyz/init?' + queryString;
+                        console.log(uri);
+                        document.getElementById("simulatedExpScreen").src = uri;
+                    });
+                    peer.on('connection', function (c) {
+                        // Allow only a single connection
+                        if (conn && conn.open) {
+                            c.on('open', function() {
+                                c.send("Already connected to another client");
+                                setTimeout(function() { c.close(); }, 500);
+                            });
+                            return;
+                        }
+
+                        conn = c;
+                        console.log("Connected to: " + conn.peer);
+                        status.innerHTML = "Connected";
+                        ready();
+                    });
+                    peer.on('disconnected', function () {
+                        status.innerHTML = "Connection lost. Please reconnect";
+                        console.log('Connection lost. Please reconnect');
+
+                        // Workaround for peer.reconnect deleting previous id
+                        peer.id = lastPeerId;
+                        peer._lastServerId = lastPeerId;
+                        peer.reconnect();
+                    });
+                    peer.on('close', function() {
+                        conn = null;
+                        status.innerHTML = "Connection destroyed. Please refresh";
+                        console.log('Connection destroyed');
+                    });
+                    peer.on('error', function (err) {
+                        console.log(err);
+                        alert('' + err);
+                    });
+                };
+
+                /**
+                 * Triggered once a connection has been achieved.
+                 * Defines callbacks to handle incoming data and connection events.
+                 */
+                function ready() {
+                    conn.on('data', function (data) {
+                        console.log("Data recieved, ", data);
+                        switch (data) {
+                            // case 'Reset':
+                            //     reset();
+                            //     addMessage(cueString + data);
+                            //     break;
+                            default:
+                                communications.push(data);
+                                updateDataDisplay();
+                        };
+                    });
+                    conn.on('close', function () {
+                        status.innerHTML = "Connection reset<br>Awaiting connection...";
+                        conn = null;
+                    });
+                }
+                function updateDataDisplay() {
+                    console.log('Updating display: ', communications);
+                    display = document.getElementById('dataDisplay');
+                    let datumLI, datum; 
+                    for (datum in communications) {
+                        datumLI = document.createElement('li');
+                        datumLI.innerText = datum;
+                        display.appendChild(datumLI);
+                    };
+                };
+                function reset() {
+                    // TODO return to initial state of site, 
+                    // ie remove connections/peers, set iframe src="", etc
+                };
+
+                initialize();
+            })();
+        </script>
+    </body>
+</html>

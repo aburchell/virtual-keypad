@@ -41,7 +41,7 @@ const checkParams = (req, res, next) => {
 
 // Create a mock experimentClient. For testing purposes only.
 app.get('/expClient', checkParams, function (req, res) {
-  res.sendFile(path.join(__dirname, 'public/', 'experimentClient.html'));
+  res.sendFile(path.join(__dirname, 'public/', 'experimentReceiver.html'));
 });
 
 // Create a screen with a QR Code to for the user to scan.
