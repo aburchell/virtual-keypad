@@ -31,7 +31,6 @@ const establishPeerConnection = (peer, meID, params) => {
   // Connection with the experiment client
   conn = peer.connect(peerID, connectOptions);
   console.log("DEBUG just connected to peer with: ", conn);
-  conn.open = True;
 
   // Connection ready to use
   const handleOpen = (id) => {
