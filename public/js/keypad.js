@@ -11,6 +11,7 @@ const parseParams = (params) => {
 // -- Connection --
 const establishPeerConnection = (peer, meID, params) => {
     const [font, alphabet, peerID] = parseParams(params);
+    console.log('DEBUG: ESTABLISHING');
     startTime = Date.now();
     peer.on('error', handlePeerError);
     const connectionPayload = {
@@ -31,6 +32,7 @@ const establishPeerConnection = (peer, meID, params) => {
 
     // Connection ready to use
     const handleOpen = (id) => {
+	console.log('DEBUG now in handleOpen(id), id=', id);
         conn.send(JSON.stringify(connectionPayload));
         // Set up keypad for use
         populateKeypad(alphabet=alphabet, font=font);

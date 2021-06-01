@@ -30,15 +30,15 @@
             your experience.
             </p>
         <![endif]-->
-    <iframe id="simulatedExpScreen" title="ExperimentClient" width="600" height="400"></iframe>
     <div>
+	<iframe id="simulatedExpScreen" 
+		title="ExperimentClient" 
+		width="600" height="400"></iframe>
         <button type="button" id="newPeer">Generate Peer</button>
         <div id="idReadout" style="display:inline;">
-            <div>
-            </div>
-
-            <h3>Received data:</h3>
-            <ul id="dataDisplay"></ul>
+    </div>
+    <h3>Received data:</h3>
+    <ul id="dataDisplay"></ul>
 
 </body>
 <script type="text/javascript">
@@ -66,6 +66,7 @@
             .addEventListener("click", generatePeerConnection);
 
     const onConnection = (conn) => {
+	console.log('DEBUG in onConnection, with conn: ', conn);
         const onConnData = (data) => {
             if (experimentClientID in communications) {
                 communications[experimentClientID].push(...data.response);
@@ -81,6 +82,7 @@
     };
 
     const updateDataDisplay = (comms) => {
+	console.log('Updating display: ', comms);
         display = document.getElementById('dataDisplay');
         let id, idLI, idData, idHeader, datum, datumReadout;
         for (id in comms) {
