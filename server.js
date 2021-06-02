@@ -52,7 +52,7 @@ app.get('/init', checkParams, function (req, res) {
 // Link to the actual keypad
 // ie this is where the user will be sent (from the QR code) on their phone
 app.get('/keypad', checkParams, function (req, res) {
-  res.sendFile(path.join(__dirname, 'public/', 'keypad.html'));
+  res.sendFile(path.join(__dirname, 'public/', 'keypadSend.html'));
 });
 
 app.use(function (err, req, res, next) {

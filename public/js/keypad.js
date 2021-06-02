@@ -1,93 +1,11 @@
-let startTime, conn;
+const pressFeedback = new Audio('/static/sound/buttonPressFeedback.mp3');
 
 // -- Parameters --
 const parseParams = (params) => {
   const font = params.get("font");
   const alphabet = [...new Set(params.get("alphabet").split(""))];
   const peerID = params.get("peerID");
-  return [font, alphabet, peerID];
-};
-
-// -- Connection --
-const establishPeerConnection = (peer, meID, params) => {
-  const [font, alphabet, peerID] = parseParams(params);
-  console.log("DEBUG: ESTABLISHING");
-  startTime = Date.now();
-  peer.on("error", handlePeerError);
-  const connectionPayload = {
-    message: "Hello! Connection made.",
-    keypadClientID: meID,
-    experimentServerID: peerID,
-    timeSent: Date.now(),
-    elapsedStartToSend: Date.now() - startTime,
-  };
-  const connectOptions = {
-    label: `ExperimentClient-{peerID}`,
-    metadata: connectionPayload,
-    serialization: "json",
-  };
-
-  console.log("DEBUG about to connect to peer");
-  // Connection with the experiment client
-  conn = peer.connect(peerID, connectOptions);
-  console.log("DEBUG just connected to peer with: ", conn);
-
-  // Connection ready to use
-  const handleOpen = (id) => {
-    console.log("DEBUG now in handleOpen(id), id=", id);
-    conn.send(JSON.stringify(connectionPayload));
-    // Set up keypad for use
-    populateKeypad((alphabet = alphabet), (font = font));
-    // Just a personal check of our understanding
-    if (id == peerID) {
-      console.log(
-        "Good job, your understanding of experimentClient peer ID is correct!",
-        id,
-        peerID
-      );
-    } else {
-      console.log("Uh oh, id != peerID", id, peerID);
-    }
-  };
-  conn.on("open", handleOpen);
-
-  // Receive data from experimentClient, ie get new keypad params
-  const handleReceive = (data) => {
-    console.log("Received data from experimentServer: ", data);
-
-    // TODO check if data is saying experiment has ended, ie to close
-    if (!data.hasOwnProperty("alphabet") || !data.hasOwnProperty("font")) {
-      console.log(
-        'Error in parsing data received! Must set "alphabet" and "font" properties'
-      );
-    } else {
-      // Stay on the same page, change keys (url params now out-of-sync)
-      // populateKeypad(data.alphabet, data.font);
-
-      // Redirect to the correct page
-      conn.close();
-      let newParams = {
-        alphabet: data.alphabet,
-        font: data.font,
-        peerID: peerID,
-      };
-      let queryString = Object.keys(newParams)
-        .map((key) => key + "=" + newParams[key])
-        .join("&");
-      window.location.search = queryString;
-    }
-  };
-  conn.on("data", handleReceive);
-  // Handle errors with connection appropriately
-  // TODO try to reconnect if there is a resolvable problem with connection
-  conn.on("error", handleConnError);
-  conn.on("close", handleClose);
-};
-const handleConnError = (err) => {
-  console.log("Uh oh! Error with connection: ", err);
-};
-const handleClose = () => {
-  console.log("Connection with experimentClient closed!");
+  return [alphabet, font, peerID];
 };
 
 // -- Keypad --
@@ -120,7 +38,7 @@ const interResponseKeypadMessaging = () => {
     element.classList.add("unpressable", "noselect");
   });
 };
-const responseButtonHandler = (button) => {
+const responseButtonHandler = (button, alphabet, font, conn, peer) => {
   // Start playing feedback sound, ie just a 'beep'
   pressFeedback.play();
   // Not sure if necessary, but stop playing the sound after a set time
@@ -132,18 +50,28 @@ const responseButtonHandler = (button) => {
   // Send response message to experimentClient
   const message = {
     message: "Keypress",
-    keypadClientID: meID,
-    experimentClientID: peerID,
+    sendId: peer.id,
+    recvId: conn.peer,
     response: button.id,
     timeSent: Date.now(),
-    elapsedStartToSend: Date.now() - startTime,
+    elapsedStartToSend: Date.now() - window.startTime,
   };
-  conn.send(JSON.stringify(message));
+  /**
+   * Send a signal via the peer connection to indicate keypress.
+   * This will only occur if the connection is still alive.
+  */
+  if (conn && conn.open) {
+    conn.send(JSON.stringify(message));
+    console.log('Keypress sent: ', JSON.stringify(message));
+  } else {
+    console.log("Connection is closed");
+  }
 
   // Update keypad after a period of visible non-responsivity (ie ITI)
   visualFeedbackThenReset(alphabet, font);
 };
-const populateKeypad = (alphabet, font) => {
+const populateKeypad = (alphabet, font, conn, peer) => {
+  console.log('DEBUG I should be populating keyboard.');
   // Set-up an instruction/welcome message for the user
   const header = document.getElementById("remote-header");
   header.innerText = "Please respond by pressing a key.";
@@ -154,9 +82,9 @@ const populateKeypad = (alphabet, font) => {
   // Remove previous buttons
   remoteControl.innerHTML = "";
   // Create new buttons
-  alphabet.forEach((symbol) => createButton(symbol, alphabet, font));
+  alphabet.forEach((symbol) => createButton(symbol, alphabet, font, conn, peer));
 };
-const createButton = (symbol) => {
+const createButton = (symbol, alphabet, font, conn, peer) => {
   // Create a response button for this symbol
   let button = document.createElement("a");
   button.id = symbol;
@@ -168,7 +96,9 @@ const createButton = (symbol) => {
     e.preventDefault();
     e.target.click();
   });
-  button.addEventListener("click", () => responseButtonHandler(button));
+  button.addEventListener("click", () => {
+    responseButtonHandler(button, alphabet, font, conn, peer);
+  });
 
   // Create a label for the button
   let buttonLabel = document.createElement("span");
@@ -178,10 +108,95 @@ const createButton = (symbol) => {
   // Add the label to the button
   button.appendChild(buttonLabel);
   // Add the labeled-button to the HTML
-  remoteControl.appendChild(button);
+  document.querySelector('#remote-control').appendChild(button);
 };
 
-// -- Peer --
-const handlePeerError = (err) => {
-  console.log("Uh oh! Error with peer: ", err);
-};
+// let startTime, conn;
+// // -- Connection --
+// const establishPeerConnection = (peer, meID, params) => {
+//   const [font, alphabet, peerID] = parseParams(params);
+//   console.log("DEBUG: ESTABLISHING");
+//   startTime = Date.now();
+//   peer.on("error", handlePeerError);
+//   const connectionPayload = {
+//     message: "Hello! Connection made.",
+//     keypadClientID: meID,
+//     experimentServerID: peerID,
+//     timeSent: Date.now(),
+//     elapsedStartToSend: Date.now() - startTime,
+//   };
+//   const connectOptions = {
+//     label: `ExperimentClient-{peerID}`,
+//     metadata: connectionPayload,
+//     serialization: "json",
+//   };
+
+//   console.log("DEBUG about to connect to peer");
+//   // Connection with the experiment client
+//   conn = peer.connect(peerID, connectOptions);
+//   console.log("DEBUG just connected to peer with: ", conn);
+
+//   // Connection ready to use
+//   const handleOpen = (id) => {
+//     console.log("DEBUG now in handleOpen(id), id=", id);
+//     conn.send(JSON.stringify(connectionPayload));
+//     // Set up keypad for use
+//     populateKeypad((alphabet = alphabet), (font = font));
+//     // Just a personal check of our understanding
+//     if (id == peerID) {
+//       console.log(
+//         "Good job, your understanding of experimentClient peer ID is correct!",
+//         id,
+//         peerID
+//       );
+//     } else {
+//       console.log("Uh oh, id != peerID", id, peerID);
+//     }
+//   };
+//   conn.on("open", handleOpen);
+
+//   // Receive data from experimentClient, ie get new keypad params
+//   const handleReceive = (data) => {
+//     console.log("Received data from experimentServer: ", data);
+
+//     // TODO check if data is saying experiment has ended, ie to close
+//     if (!data.hasOwnProperty("alphabet") || !data.hasOwnProperty("font")) {
+//       // TODO how do I correctly throw an error?
+//       console.log(
+//         'Error in parsing data received! Must set "alphabet" and "font" properties'
+//       );
+//     } else {
+//       // Stay on the same page, change keys (url params now out-of-sync)
+//       // populateKeypad(data.alphabet, data.font);
+
+//       // Redirect to the correct page
+//       conn.close();
+//       let newParams = {
+//         alphabet: data.alphabet,
+//         font: data.font,
+//         peerID: peerID,
+//       };
+//       let queryString = Object.keys(newParams)
+//         .map((key) => key + "=" + newParams[key])
+//         .join("&");
+//       window.location.search = queryString;
+//     }
+//   };
+//   conn.on("data", handleReceive);
+//   // Handle errors with connection appropriately
+//   // TODO try to reconnect if there is a resolvable problem with connection
+//   conn.on("error", handleConnError);
+//   conn.on("close", handleClose);
+// };
+// const handleConnError = (err) => {
+//   console.log("Uh oh! Error with connection: ", err);
+// };
+// const handleClose = () => {
+//   console.log("Connection with experimentClient closed!");
+// };
+
+
+// // -- Peer --
+// const handlePeerError = (err) => {
+//   console.log("Uh oh! Error with peer: ", err);
+// };

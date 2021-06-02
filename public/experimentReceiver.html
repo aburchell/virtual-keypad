@@ -2,33 +2,78 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width">
         <title>Temporary, pseudo-experiment</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <!-- <link rel="stylesheet" href="style.css"> -->
         <style type="text/css" media="screen">
+            html {
+                background-color: #ECFFFE;
+            k}
             body {
                 overflow: hidden;
+                height: 95vh;
+                width: 100vw
             }
+            main {
+                display: flex;
+                flex-direction: row;
+                width: 100%;
+                height: 100%;
 
-            #dataDisplay {
-                overflow: scroll;
-                max-height: 600px;
+            }
+            #qrScreen {
+                grid-area: qr;
+                width: 60%;
+                height: 100%;
+                border-radius: 5%;
+                display: flex;
+                flex-direction: column;
+            }
+            #simulatedExpScreen {
+                border-style: solid;
+                border-width: 3px;
+                border-color: #FF7F51;
+                background-color: #94CCCA;
+            }
+            #dashboard {
+                grid-area: data;
+                width: 40%;
+                height: 85%;
+                border-color: #FF7F51;
+                border-style: solid;
+                border-width: 3px;
+                background-color: #94CCCA;
+                margin-right: 10%;
+                padding: 2%;
+                border-radius: 5%;
+            }
+            #qrCaption {
+                background-color: #94CCCA;
+                margin: 1%;
+                padding: 1%;
+                border-radius: 5%;
+                width: 25%;
             }
         </style>
     </head>
     <body>
 
-        <div>
-        <iframe id="simulatedExpScreen" 
-            title="ExperimentClient" 
-            width="600" height="400"></iframe>
-            <div id="idReadout" style="display:inline;">
-            <div id="status"></div>
-        </div>
-        <h3>Received data:</h3>
-        <ul id="dataDisplay"></ul>
+        <main>
+            <div id="qrScreen">
+                <iframe id="simulatedExpScreen" 
+                    title="ExperimentClient" 
+                    width="600" height="550"></iframe>
+                <div id="qrCaption">
+                    <div id="idReadout" style="display:inline;"></div>
+                    <div id="status"></div>
+                </div>
+            </div>
+            <div id="dashboard">
+                <h3>Received data:</h3>
+                <ul id="dataDisplay"></ul>
+            </div>
+        </main>
 
         <script src="/static/lib/peerjs.min.js"></script>
         <script src="https://unpkg.com/uuid@latest/dist/umd/uuidv4.min.js"></script>
@@ -44,9 +89,6 @@
                 var communications = [];
                 var recvId = document.getElementById("idReadout");
                 var status = document.getElementById("status");
-                var sendMessageBox = document.getElementById("sendMessageBox");
-                var sendButton = document.getElementById("sendButton");
-                var clearMsgsButton = document.getElementById("clearMsgsButton");
 
                 /**
                  * Create the Peer object for our end of the connection.
@@ -74,7 +116,7 @@
                         status.innerHTML = "Awaiting connection...";
 
                         document.getElementById("idReadout").innerText = peer.id;
-                        alphabet = 'abcedfghij';
+                        alphabet = 'ABCDEFGHIJK';
                         font = 'Sloan';
                         const params = { 'alphabet': alphabet, 
                                         'font': font, 
@@ -134,7 +176,8 @@
                             //     addMessage(cueString + data);
                             //     break;
                             default:
-                                communications.push(data);
+                                communications.push(
+                                    JSON.parse(data)['response']);
                                 updateDataDisplay();
                         };
                     });
@@ -146,10 +189,11 @@
                 function updateDataDisplay() {
                     console.log('Updating display: ', communications);
                     display = document.getElementById('dataDisplay');
+                    display.innerHTML = '';
                     let datumLI, datum; 
                     for (datum in communications) {
                         datumLI = document.createElement('li');
-                        datumLI.innerText = datum;
+                        datumLI.innerText = communications[datum];
                         display.appendChild(datumLI);
                     };
                 };

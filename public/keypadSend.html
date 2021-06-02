@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Virtual Keypad</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/static/css/keypad.css" />
+    <link rel="stylesheet" type="text/css" href="/static/fonts/Pelli/PelliFont.css">
+    <link rel="stylesheet" type="text/css" href="/static/fonts/Sloan/SloanFont.css">
+  </head>
+  <body>
+    <h2 id="remote-header" class="noselect">Keypad Loading...</h2>
+
+    <main>
+      <div id="remote-control"></div>
+      <!-- <div>
+        Sender (this) ID: <span id="sendIdDisplay"></span> <br />
+        Receiver (experiment) ID: <span id="recvIdDisplay"></span>
+      </div> -->
+    </main>
+
+    <script src="/static/js/keypad.js" type="text/javascript"></script>
+    <script src="/static/lib/peerjs.min.js"></script>
+    <!-- <script src="https://unpkg.com/uuid@latest/dist/umd/uuidv4.min.js"></script> -->
+    <script type="text/javascript">
+      (function () {
+        window.startTime = Date.now();
+        var lastPeerId = null;
+        var peer = null; // own peer object
+        var conn = null;
+        var alphabet = null;
+        var font = null;
+        var recvId = null; // peer id of the receiving page
+
+        /**
+         * Create the Peer object for our end of the connection.
+         *
+         * Sets up callbacks that handle any events related to our
+         * peer object.
+         */
+        function initialize() {
+          // Create own peer object with connection to shared PeerJS server
+          peer = new Peer(null, {
+            debug: 2,
+          });
+
+          // Get parameters for this keypad, from uri query
+          [alphabet, font, recvId] = parseParams(
+            new URLSearchParams(window.location.search)
+          );
+
+          peer.on("open", function (id) {
+            // Workaround for peer.reconnect deleting previous id
+            if (peer.id === null) {
+              console.log("Received null id from peer open");
+              peer.id = lastPeerId;
+            } else {
+              lastPeerId = peer.id;
+            }
+
+            console.log("Sender (my) ID: " + peer.id);
+            console.log("Receiver (experiment) ID: " + recvId);
+
+            join();
+          });
+          peer.on("connection", function (c) {
+            // Disallow incoming connections
+            c.on("open", function () {
+              c.send("Sender does not accept incoming connections");
+              setTimeout(function () {
+                c.close();
+              }, 500);
+            });
+          });
+          peer.on("disconnected", function () {
+            console.log("Connection lost. Please reconnect");
+            // Workaround for peer.reconnect deleting previous id
+            peer.id = lastPeerId;
+            peer._lastServerId = lastPeerId;
+            peer.reconnect();
+          });
+          peer.on("close", function () {
+            conn = null;
+            console.log("Connection destroyed. Please refresh.");
+          });
+          peer.on("error", function (err) {
+            console.log(err);
+            alert("" + err);
+          });
+        }
+
+        /**
+         * Create the connection between the two Peers.
+         *
+         * Sets up callbacks that handle any events related to the
+         * connection and data received on it.
+         */
+        function join() {
+          // Close old connection
+          if (conn) {
+            conn.close();
+          }
+          // Create connection to destination peer specified by the query param
+          console.log(recvId);
+          conn = peer.connect(recvId, {
+            reliable: true,
+          });
+
+          conn.on("open", function () {
+            populateKeypad(alphabet, font, conn, peer);
+            console.log("Connected to: " + conn.peer);
+          });
+          // Handle incoming data (messages only since this is the signal sender)
+          conn.on("data", function (data) {
+            if (
+              !data.hasOwnProperty("alphabet") ||
+              !data.hasOwnProperty("font")
+            ) {
+              // TODO how do I correctly throw an error?
+              console.log(
+                'Error in parsing data received! Must set "alphabet" and "font" properties'
+              );
+            } else {
+              conn.close(); // VERIFY is this the right way to close connection?
+              let newParmas = {
+                  'alphabet': alphabet,
+                  'font': font,
+                  'peerID': conn.peer,
+                  // 'recvId': recvId // VERIFY This SHOULD be the same as peerID??
+              };
+              let queryString = Object.keys(newParams)
+                .map((key) => key + "=" + newParams[key])
+                .join("&");
+              // VERIFY does this reload the page cleanly/sustainably/correctly?
+              window.location.search = queryString;
+            }
+          });
+          conn.on("close", function () {
+            console.log("Connection closed");
+          });
+        }
+        // Since all our callbacks are setup, start the process of obtaining an ID
+        initialize();
+      })();
+    </script>
+  </body>
+</html>
