@@ -6,16 +6,16 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <!-- TODO include JS and css from webpack bundle -->
-        <script src="dist/receiver.js"></script>
+        <script src="/static/receiver.js"></script>
     </head>
     <body>
         <main id="main"> </main>
         <script type="module">
-            let keypad_options = {
+            const keypad_options = {
                 'alphabet': "ZYXWABCD",
                 'font': "Sloan"
             };
-            let ondata_callback = (data) => {
+            const ondata_callback = (data) => {
                 console.log(data);
             };
             window.keypad.keypad_receiver(keypad_options, ondata_callback);

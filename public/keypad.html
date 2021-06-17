@@ -1,62 +1,31 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>Wireless Keypad</title>
-        <meta name="viewport" content="width=device-width">
-        <link rel="stylesheet" type="text/css" href="/static/css/keypad.css">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Virtual Keypad</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+    <link rel="stylesheet" href="/static/css/keypad.css" />
+    <link rel="stylesheet" type="text/css" href="/static/fonts/Pelli/PelliFont.css">
+    <link rel="stylesheet" type="text/css" href="/static/fonts/Sloan/SloanFont.css">
+    -->
+    <script src="/static/keypad.js"></script>
+  </head>
+  <body>
+    <h2 id="keypad-header" class="noselect">Keypad Loading...</h2>
 
-        <script src="/static/js/keypad.js" type="text/javascript"></script>
-	<script src="/static/lib/peerjs.min.js"></script>
-	<script src="https://unpkg.com/uuid@latest/dist/umd/uuidv4.min.js"></script>
-	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.1.0/uuidv4.min.js"></script> -->
+    <main>
+      <!-- <div id="remote-control"></div> -->
+      <!-- <div>
+        Sender (this) ID: <span id="sendIdDisplay"></span> <br />
+        Receiver (experiment) ID: <span id="recvIdDisplay"></span>
+      </div> -->
+    </main>
 
-        <!-- TODO add fonts
-        <link rel="stylesheet" type="text/css" href="/static/fonts/Pelli/PelliFont.css">
-        <link rel="stylesheet" type="text/css" href="/static/fonts/Sloan/SloanFont.css">
-        -->
-
-
-        <!-- 
-        Client (ie mobile device) webapp for communicating text responses
-        to another device, namely a personal computer running a PsychoPy/JS 
-        experiment.
-        Accepts URL parameters:
-        - alphabet: the domain of symbols with which the user may respond 
-        - font: the font that should be used, if available 
-        - peerID: peerID of the experiment/client application
-        -->
-
-    </head>
-
-    <body>
-        <h2 id="remote-header" class="noselect"></h2>
-
-        <main>
-            <div id="remote-control">REMOTE CONTROL DIV</div>
-        </main>
-    </body>
-
-    <script>
-	console.log("Silly billy, this runs on page open too.");
-        window.onload = () => {
-	    console.log("Window loading...");
-            // Establish ID for this, the keypad client
-            // const meID = uuidv4();
-            const meID = uuidv4();
-            const peer = new Peer(meID);
-
-            // Parse parameters
-            const params = new URLSearchParams(window.location.search);
-
-            // TODO how do I make sure this is being cached? need more performant
-            var pressFeedback = new Audio('/static/sound/buttonPressFeedback.mp3');
-
-            // Get start time for remote
-            let startTime = Date.now();
-
-            // document.getElementById('remote-control').style.setProperty('--nbuttons', cleanAlphabet.length);
-
-            // Generate keypad for user inside establishPeerConnection
-            establishPeerConnection(peer, meID, params);
-        };
+    <script type="text/javascript">
+      keypad.keypad();
     </script>
+  </body>
 </html>

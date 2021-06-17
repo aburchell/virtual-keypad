@@ -2,13 +2,15 @@ var QRCode = require('qrcode')
 require('../css/receiver.css');
 require('peerjs');
 
-export var keypad_communications = [];
+// TODO remove/generallize calls to Main
+
+var keypad_communications = [];
 
 function queryString(params) {
     return Object.keys(params).map(key => key + '=' + params[key]).join('&');
 }
 
-export function keypad_receiver(keypad_params, callback){
+export function keypad_receiver(keypad_params, onDataCallback){
     var lastPeerId = null;
     var peer = null; // Own peer object
     var peerId = null;
@@ -76,11 +78,11 @@ export function keypad_receiver(keypad_params, callback){
 
             conn = c;
             console.log("Connected to: " + conn.peer);
-            status.innerHTML = "Connected";
+            document.getElementById("main").innerHTML = "Connected";
             ready();
         });
         peer.on('disconnected', function () {
-            status.innerHTML = "Connection lost. Please reconnect";
+            document.getElementById("main").innerHTML = "Connection lost. Please reconnect";
             console.log('Connection lost. Please reconnect');
 
             // Workaround for peer.reconnect deleting previous id
@@ -90,7 +92,7 @@ export function keypad_receiver(keypad_params, callback){
         });
         peer.on('close', function() {
             conn = null;
-            status.innerHTML = "Connection destroyed. Please refresh";
+            document.getElementById("main").innerHTML = "Connection destroyed. Please refresh";
             console.log('Connection destroyed');
         });
         peer.on('error', function (err) {
@@ -104,11 +106,14 @@ export function keypad_receiver(keypad_params, callback){
      * Defines callbacks to handle incoming data and connection events.
      */
     function ready() {
+        console.log('DEBUG: In read()')
         conn.on('data', function (data) {
             // Record communciation
-            window.keypad_communications.push(data);
+            keypad_communications.push(JSON.parse(data));
+            console.log('Received communications: ', keypad_communications);
             // Perform callback with data
-            callback(data);
+            console.log('Going to perform callback on data!');
+            onDataCallback(data);
 
             console.log("Data recieved, ", data);
             // switch (data) {
@@ -123,7 +128,7 @@ export function keypad_receiver(keypad_params, callback){
             // };
         });
         conn.on('close', function () {
-            status.innerHTML = "Connection reset<br>Awaiting connection...";
+            document.getElementById("main").innerHTML = "Connection reset<br>Awaiting connection...";
             conn = null;
         });
     }
