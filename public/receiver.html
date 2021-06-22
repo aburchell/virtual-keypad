@@ -16,6 +16,7 @@
                 'font': "Sloan"
             };
             const ondata_callback = (data) => {
+                document.getElementById("main").innerHTML += data;
                 console.log(data);
             };
             window.keypad.keypad_receiver(keypad_options, ondata_callback);
