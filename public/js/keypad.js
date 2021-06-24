@@ -220,7 +220,7 @@ export function keypad() {
     });
     // Handle incoming data (messages only since this is the signal sender)
     conn.on("data", function (data) {
-      if (!data.hasOwnProperty("alphabet") || !data.hasOwnProperty("font")) {
+      if (!data.hasOwnProperty("alphabet") && !data.hasOwnProperty("font")) {
         // TODO how do I correctly throw an error?
         console.log(
           'Error in parsing data received! Must set "alphabet" and "font" properties'
@@ -229,11 +229,12 @@ export function keypad() {
         conn.close(); // VERIFY is this the right way to close connection?
 	if (data.hasOwnProperty("alphabet")) {
 	  alphabet = data["alphabet"];
+	  console.log('DEBUG New alphabet: ', alphabet);
 	}
 	if (data.hasOwnProperty("font")) {
 	  font = data["font"];
 	}
-        let newParmas = {
+        let newParams = {
           alphabet: alphabet,
           font: font,
           peerID: conn.peer,
