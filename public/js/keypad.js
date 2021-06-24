@@ -227,6 +227,12 @@ export function keypad() {
         );
       } else {
         conn.close(); // VERIFY is this the right way to close connection?
+	if (data.hasOwnProperty("alphabet")) {
+	  alphabet = data["alphabet"];
+	}
+	if (data.hasOwnProperty("font")) {
+	  font = data["font"];
+	}
         let newParmas = {
           alphabet: alphabet,
           font: font,
